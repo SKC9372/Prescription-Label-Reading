@@ -3,3 +3,4 @@ gTTS  == 2.5.3
 paddleocr == 2.8.1
 pillow == 10.4.0
 numpy == 1.26.4
+paddlepaddle == 2.6.2
