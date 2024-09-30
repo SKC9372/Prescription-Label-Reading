@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: gradio-ocr-tts
-    env: python
-    region: oregon
-    buildCommand: ""  # Let Dockerfile handle it
-    startCommand: ""  # Let Dockerfile handle it
-    dockerfilePath: Dockerfile
-    plan: free  # or "starter" for more resources
