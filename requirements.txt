@@ -4,4 +4,3 @@ paddleocr == 2.8.1
 pillow == 10.4.0
 numpy 
 paddlepaddle == 2.6.2
-opencv-python
