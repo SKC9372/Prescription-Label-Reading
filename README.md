@@ -47,10 +47,6 @@ To use the application, visit: [Prescription Label Reading Application](https://
 
 If you would like to contribute to this project, feel free to fork the repository and submit a pull request. Your contributions are welcome!
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
 
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) for OCR functionality.
