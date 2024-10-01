@@ -1,114 +1,62 @@
-from paddleocr import PaddleOCR
-from PIL import Image, ImageEnhance, ImageFilter
-import numpy as np
-import gradio as gr
-from gtts import gTTS
+from flask import Flask,url_for,render_template,send_file,request
+from tts import text_extraction,text_to_speech
+import os
 
-ocr_model = PaddleOCR(lang = 'en',use_angle_cls = True)
+app = Flask(__name__)
 
-# Initialize the OCR model
-ocr_model = PaddleOCR(lang="en", use_angle_cls=True)
+# Folder to store uploaded files temporarily
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-def preprocess(image_path):
-    """
-    Preprocess the image by enhancing its contrast and sharpness.
+# Create the upload folder if it doesn't exist
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-    Args:
-        image_path (str): Path to the input image file.
+@app.route('/')
+@app.route('/home')
+def home():
+    return render_template('home.html',title = 'Home')
 
-    Returns:
-        np.ndarray: Preprocessed image as a NumPy array.
-    """
-    # Open the image
-    image = Image.open(image_path)
+@app.route('/label_reading', methods=['GET', 'POST'])
+def label():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return render_template('pres_reading.html', error='No file part in the request')
 
-    # Enhance contrast
-    contrast = ImageEnhance.Contrast(image)
-    image = contrast.enhance(0.7)  # Adjust contrast
+        file = request.files['file']
 
-    # Enhance sharpness
-    sharpness = ImageEnhance.Sharpness(image)
-    image = sharpness.enhance(2)  # Adjust sharpness
+        if file.filename == '':
+            return render_template('pres_reading.html', error='No selected file')
 
-    # Convert the image to a NumPy array
-    image_np = np.array(image)
+        if file:
+            # Save the uploaded image
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(file_path)
 
-    return image_np
+            # Process the image to extract text and convert to speech
+            text = text_extraction(file_path)
+            if not text:
+                return render_template('pres_reading.html', error='No relevant text found')
 
-def text_extraction(image_path):
-    """
-    Extract text from the image using OCR.
+            # Convert the extracted text to speech
+            output_file = text_to_speech(text,app.config['UPLOAD_FOLDER'])
 
-    Args:
-        image_path (str): Path to the input image file.
+            # Generate a URL for the file download
+            file_url = url_for('download_file', filename="output.mp3")
 
-    Returns:
-        str: Extracted and filtered text as a single string.
-    """
-    # Preprocess the image
-    image = preprocess(image_path)
+            # Return the HTML with a download link
+            return render_template('pres_reading.html', file_url=file_url)
+    
+    # This return will handle GET requests, or if POST fails to meet any condition
+    return render_template('pres_reading.html')
 
-    # Perform OCR on the image
-    ocr_results = ocr_model.ocr(image, cls=True)
-
-    # Keywords to look for in the extracted text
-    keywords = ['mg', 'tablet', 'pills', 'quantity', 'qty', 'days', 'month', 'daily', 'hours', 'capsules']
-    final_text = []
-
-    # Extract relevant text from OCR results
-    for line in ocr_results:
-        for item in line:
-            text = item[1][0]
-            if any(word in text.lower() for word in keywords):
-                final_text.append(text)
-
-    return ' '.join(final_text)
-
-def text_to_speech(text):
-    """
-    Convert text to speech and save it as an MP3 file.
-
-    Args:
-        text (str): The text to be converted to speech.
-
-    Returns:
-        str: Path to the saved MP3 file.
-    """
-    # Create a gTTS object and save to MP3
-    tts = gTTS(text=text, lang='en', slow=True)
-    output_file = "output.mp3"
-    tts.save(output_file)
-
-    return output_file
-
-def final_model(image_path):
-    """
-    Complete workflow for extracting text from an image and converting it to speech.
-
-    Args:
-        image_path (str): Path to the input image file.
-
-    Returns:
-        str: Path to the saved MP3 file containing the speech.
-    """
-    # Extract text from the image
-    text = text_extraction(image_path)
-
-    # Convert extracted text to speech
-    output = text_to_speech(text)
-
-    return output
+    
+# Route to handle file download
+@app.route('/uploads/<filename>')
+def download_file(filename):
+    return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename), as_attachment=False)
 
 
-# Define the Gradio interface
-interface = gr.Interface(
-    fn=final_model,  # Function to be called
-    inputs=gr.Image(type='filepath', label="Upload an Image"),  # Input image with a label
-    outputs=gr.Audio(label="Generated Speech"),  # Output audio with a label
-    title="Image to Speech Converter",  # Title of the interface
-    description="Upload an image containing text, and this tool will extract the text and convert it to speech.",  # Description of the app
-)
 
-# Launch the Gradio interface
 if __name__ == '__main__':
-    interface.launch()
+    app.run(debug=True)
