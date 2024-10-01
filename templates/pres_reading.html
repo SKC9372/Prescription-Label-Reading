@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Upload a Prescription Label</h2>
+
+<form action="{{ url_for('label') }}" method="POST" enctype="multipart/form-data">
+    <label for="file">Choose an image:</label>
+    <input type="file" name="file" id="file" required>
+    <br><br>
+    <input type="submit" value="Upload Image">
+</form>
+
+{% if error %}
+    <p style="color: red;">{{ error }}</p>
+{% endif %}
+
+{% if file_url %}
+    <p>Audio is ready! It will start playing automatically:</p>
+    <audio controls autoplay>
+        <source src="{{ file_url }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+{% endif %}
+{% endblock content %}
