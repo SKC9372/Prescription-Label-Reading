@@ -29,6 +29,10 @@ The application is built using Flask for the backend and is successfully deploye
 
 To use the application, visit: [Prescription Label Reading Application](https://prescription-label-reading.onrender.com)
 
+To check the demo video, visit: [
+
+If the website does not work deploy in your local machine
+
 ## How to Use
 
 1. Upload an image of your prescription label.
